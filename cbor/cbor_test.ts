@@ -113,13 +113,6 @@ Deno.test({
 Deno.test({
   name: "Rejects unsupported double byte unsigned integers",
   fn() {
-    // Less than 24
-    assertThrows(() => {
-      decodeCBOR(new Uint8Array([0x18, 0]));
-    });
-    assertThrows(() => {
-      decodeCBOR(new Uint8Array([0x18, 23]));
-    });
     // Not enough
     assertThrows(() => {
       decodeCBOR(new Uint8Array([0x19, 0]));
@@ -133,6 +126,24 @@ Deno.test({
     assertEquals(decodeCBOR(new Uint8Array([0x19, 1, 255])), 511);
     assertEquals(decodeCBOR(new Uint8Array([0x19, 2, 0])), 512);
     assertEquals(decodeCBOR(new Uint8Array([0x19, 255, 255])), 65535);
+  },
+});
+Deno.test({
+  name: "Can decode arguments below 24 that are not in the shortest form",
+  fn() {
+    assertEquals(decodeCBOR(new Uint8Array([0x18, 0])), 0);
+    assertEquals(decodeCBOR(new Uint8Array([0x18, 23])), 23);
+    assertEquals(decodeCBOR(decodeHex("1805")), 5);
+    assertEquals(decodeCBOR(decodeHex("190005")), 5);
+    assertEquals(decodeCBOR(decodeHex("1a00000005")), 5);
+    assertEquals(decodeCBOR(decodeHex("1b0000000000000005")), 5);
+    assertEquals(decodeCBOR(decodeHex("3805")), -6);
+    assertEquals(decodeCBOR(decodeHex("980101")), [1]);
+    assertEquals(
+      decodeCBOR(decodeHex("5b000000000000000141")),
+      new Uint8Array([0x41]),
+    );
+    assertEquals(decodeCBOR(decodeHex("7b000000000000000161")), "a");
   },
 });
 Deno.test({
@@ -513,10 +524,6 @@ Deno.test({
     });
     assertThrows(() => {
       decodeCBOR(new Uint8Array([0x98, 0x18]));
-    });
-    // Less than 24
-    assertThrows(() => {
-      decodeCBOR(new Uint8Array([0x98, 1, 0]));
     });
   },
 });

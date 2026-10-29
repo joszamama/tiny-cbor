@@ -39,9 +39,9 @@ export function decodeLength(
     case 27: {
       if (remainingDataLength > 7) {
         const bigOutput = view.getBigUint64(0, false);
-        // Bound it to [24, MAX_SAFE_INTEGER], where it is safe
+        // Bound it to [0, MAX_SAFE_INTEGER], where it is safe
         // to encode as a javascript number
-        if (bigOutput >= 24n && bigOutput <= Number.MAX_SAFE_INTEGER) {
+        if (bigOutput <= Number.MAX_SAFE_INTEGER) {
           return [Number(bigOutput), 9];
         } else {
           return [bigOutput, 9];
@@ -51,7 +51,9 @@ export function decodeLength(
     }
   }
 
-  if (output && output >= 24) {
+  // Values below 24 are well formed in the longer forms too, even though
+  // they are not the shortest encoding (RFC 8949 section 3).
+  if (output !== undefined) {
     return [output, bytes];
   }
 

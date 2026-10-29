@@ -40,6 +40,20 @@ Deno.test({
       9007199254740992n,
       9,
     ]);
+    // Values below 24 in the longer forms are well formed
+    assertEquals(decodeLength(toView(new Uint8Array([0x18, 0])), 24, 0), [
+      0,
+      2,
+    ]);
+    assertEquals(decodeLength(toView(new Uint8Array([0x19, 0, 0])), 25, 0), [
+      0,
+      3,
+    ]);
+    assertEquals(decodeLength(toView(decodeHex("1a00000017")), 26, 0), [23, 5]);
+    assertEquals(decodeLength(toView(decodeHex("1b0000000000000005")), 27, 0), [
+      5,
+      9,
+    ]);
   },
 });
 
@@ -172,23 +186,14 @@ Deno.test({
       decodeLength(toView(new Uint8Array([0x18])), 24, 0);
     }, "Requires one more byte");
     assertThrows(() => {
-      decodeLength(toView(new Uint8Array([0x18, 0])), 24, 0);
-    }, "Requires one more byte, number must be > 23");
-    assertThrows(() => {
       decodeLength(toView(new Uint8Array([0x19])), 25, 0);
     }, "Requires two more bytes, two missing");
     assertThrows(() => {
       decodeLength(toView(new Uint8Array([0x19, 0])), 25, 0);
     }, "Requires two more bytes, one missing");
     assertThrows(() => {
-      decodeLength(toView(new Uint8Array([0x19, 0, 0])), 25, 0);
-    }, "Requires two more bytes, number must be > 23");
-    assertThrows(() => {
       decodeLength(toView(decodeHex("1a000f42")), 26, 0);
     }, "Requires four more bytes, missing a byte");
-    assertThrows(() => {
-      decodeLength(toView(decodeHex("1a00000017")), 26, 0);
-    }, "Requires four more bytes, must be > 23");
     assertThrows(() => {
       decodeLength(toView(decodeHex("1b000000e8d4a510")), 27, 0);
     }, "Requires eight more bytes, missing a byte");
